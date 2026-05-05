@@ -4,14 +4,13 @@ import cv2
 import open3d as o3d
 import copy
 
-
 # ---------------------------------
 # Parameter
 # ---------------------------------
-GUIDED_RADIUS = 500         # beeinflusst die Glaettung der Flaechen durch den Bilateral (ausgenommen der Kanten aus RGB)
-GUIDED_EPS = 1e-5           # steuert den Einfluss des Guide-Bilds (je kleiner EPS, umso mehr wird Guide miteinbezogen)
-SHARP_LAMBDA = 1          # Gewicht der Unsharp Map
-RESIDUAL_CLAMP = 0.02       # [m] Clamp fuer maximal valide Aenderung eines Tiefenwerts (sollte eher klein gehalten werden sonst Ueberschwingen)
+GUIDED_RADIUS = 500  # beeinflusst die Glaettung der Flaechen durch den Bilateral (ausgenommen der Kanten aus RGB)
+GUIDED_EPS = 1e-5  # steuert den Einfluss des Guide-Bilds (je kleiner EPS, umso mehr wird Guide miteinbezogen)
+SHARP_LAMBDA = 1  # Gewicht der Unsharp Map
+RESIDUAL_CLAMP = 0.02  # [m] Clamp fuer maximal valide Aenderung eines Tiefenwerts (sollte eher klein gehalten werden sonst Ueberschwingen)
 
 
 # ---------------------------------
@@ -90,10 +89,7 @@ cv2.imshow("RGB Edge Guide", edge_guide)
 # ---------------------------------
 if hasattr(cv2.ximgproc, "guidedFilter"):
     depth_smooth = cv2.ximgproc.guidedFilter(
-        guide=edge_guide,
-        src=depth_m,
-        radius=GUIDED_RADIUS,
-        eps=GUIDED_EPS
+        guide=edge_guide, src=depth_m, radius=GUIDED_RADIUS, eps=GUIDED_EPS
     )
 else:
     print("Fallback: Joint Bilateral Filter nicht aktiv")
@@ -104,19 +100,23 @@ else:
 residual = depth_m - depth_smooth
 residual = np.clip(residual, -RESIDUAL_CLAMP, RESIDUAL_CLAMP)
 # depth_sharp = depth_m + SHARP_LAMBDA * residual
-depth_sharp = depth_m + SHARP_LAMBDA * residual * edge_guide        # explizit nur die Kanten mitnehmen
+depth_sharp = (
+    depth_m + SHARP_LAMBDA * residual * edge_guide
+)  # explizit nur die Kanten mitnehmen
 
 # ---------------------------------
 # Intrinsik für Punktwolke
 # ---------------------------------
-intrinsics = profile.get_stream(rs.stream.color) \
-    .as_video_stream_profile().get_intrinsics()
+intrinsics = (
+    profile.get_stream(rs.stream.color).as_video_stream_profile().get_intrinsics()
+)
 
 fx, fy = intrinsics.fx, intrinsics.fy
 cx, cy = intrinsics.ppx, intrinsics.ppy
 
 h, w = depth_m.shape
 u, v = np.meshgrid(np.arange(w), np.arange(h))
+
 
 # ---------------------------------
 # Funktion: Depth -> Point Cloud
@@ -132,11 +132,13 @@ def depth_to_pointcloud(depth, color):
     valid = z.reshape(-1) > 0
     return points[valid], colors[valid]
 
+
 # Original
 pts_orig, cols_orig = depth_to_pointcloud(depth_m, color_img)
 
 # Geschärft
 pts_sharp, cols_sharp = depth_to_pointcloud(depth_sharp, color_img)
+
 
 # ---------------------------------
 # Open3D Punktwolken
