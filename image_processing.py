@@ -1,10 +1,18 @@
 import logging
 import warnings
+import json
+from pathlib import Path
 import numpy as np
 import cv2 as cv
 import open3d as o3d
 from typing import Optional
-from image_processing.helper import load_dict_from_json
+
+# from image_processing.helper import load_dict_from_json
+
+
+def load_dict_from_json(path: Path):
+    with open(path, "r") as f:
+        return json.load(f)
 
 
 class ImageProcessing:
